@@ -30,7 +30,6 @@ module.exports = {
         repository: {
           owner: "DungNg",
           name: "TaskSchedule",
-          draft: true,
         },
       },
     },
