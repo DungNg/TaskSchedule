@@ -1,7 +1,7 @@
 {
   "name": "taskschedule",
   "productName": "taskschedule",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "Schedule task in electron",
   "main": "src/index.js",
   "scripts": {
@@ -10,7 +10,6 @@
     "make": "electron-forge make",
     "publish": "electron-forge publish",
     "lint": "echo \"No linting configured\"",
-    "build": ""
   },
   "keywords": [],
   "author": "dung",
