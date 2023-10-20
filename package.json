@@ -9,12 +9,14 @@
     "package": "electron-forge package",
     "make": "electron-forge make",
     "publish": "electron-forge publish",
-    "lint": "echo \"No linting configured\""
+    "lint": "echo \"No linting configured\"",
+    "build" : ""
   },
   "keywords": [],
   "author": "dung",
   "license": "MIT",
   "dependencies": {
+    "electron-builder": "^24.6.4",
     "electron-squirrel-startup": "^1.0.0"
   },
   "devDependencies": {
