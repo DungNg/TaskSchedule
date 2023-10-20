@@ -1,6 +1,6 @@
 {
   "name": "taskschedule",
-  "productName": "Task Schedule",
+  "productName": "taskschedule",
   "version": "1.0.0",
   "description": "Schedule task in electron",
   "main": "src/index.js",

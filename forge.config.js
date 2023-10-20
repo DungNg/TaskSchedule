@@ -1,6 +1,8 @@
 module.exports = {
   packagerConfig: {
     asar: true,
+    executableName: "taskschedule",
+    icon: '/assets/tray-icon.ico',
   },
   rebuildConfig: {},
   makers: [
