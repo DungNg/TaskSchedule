@@ -41,8 +41,8 @@ function notify(title, body) {
 }
 
 const calculateTimeToMinutes = () => {
-  let halfHour = 1;
-  let fullHour = 2;
+  let halfHour = 30;
+  let fullHour = 60;
   let oneMinutes = 1000 * 60;
   let oneSeconds = 1000;
   const currentTime = new Date();
