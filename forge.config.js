@@ -29,7 +29,7 @@ module.exports = {
       config: {
         repository: {
           owner: "Dung",
-          name: "Electron Release",
+          name: "TaskSchedule",
         },
         prerelease: true,
       },
