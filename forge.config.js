@@ -2,7 +2,7 @@ module.exports = {
   packagerConfig: {
     asar: true,
     executableName: "taskschedule",
-    icon: '/assets/tray-icon.ico',
+    icon: "/assets/tray-icon.ico",
   },
   rebuildConfig: {},
   makers: [
@@ -28,10 +28,10 @@ module.exports = {
       name: "@electron-forge/publisher-github",
       config: {
         repository: {
-          owner: "Dung",
+          owner: "DungNg",
           name: "TaskSchedule",
+          draft: true,
         },
-        prerelease: true,
       },
     },
   ],
