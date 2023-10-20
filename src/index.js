@@ -1,4 +1,21 @@
-const { app, BrowserWindow, ipcMain, Notification } = require("electron");
+const {
+  app,
+  BrowserWindow,
+  ipcMain,
+  nativeImage,
+  Tray,
+  Menu,
+} = require("electron");
+
+const {
+  scheduleTask,
+  isScheduledTask,
+  stopScheduledTask,
+  calculateTimeToMinutes,
+  stopAudio,
+  isAlertRingging,
+  getInputFromUser,
+} = require("./taskSchedule");
 const path = require("path");
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
@@ -6,40 +23,84 @@ if (require("electron-squirrel-startup")) {
   app.quit();
 }
 
+let tray = null;
+function createTray() {
+  const trayicon = nativeImage.createFromPath(path.join(__dirname, 'assets', 'tray-icon.ico'));
+  tray = new Tray(trayicon.resize({ width: 16 }));
+  let contextMenu = Menu.buildFromTemplate([
+    {
+      label: "Show App",
+      click: () => {
+        createWindow();
+      },
+    },
+    {
+      label: "Quit",
+      click: () => {
+        app.quit(); // actually quit the app.
+      },
+    },
+  ]);
+  tray.setContextMenu(contextMenu);
+}
+
+let mainWindow = null;
+
 const createWindow = () => {
   // Create the browser window.
-  const mainWindow = new BrowserWindow({
+  if (!tray) {
+    // if tray hasn't been created already.
+    createTray();
+  }
+
+  if (mainWindow) {
+    return;
+  }
+
+  mainWindow = new BrowserWindow({
     width: 500,
     height: 400,
     resizable: false,
     webPreferences: {
+      nodeIntegration: true,
       preload: path.join(__dirname, "preload.js"),
     },
   });
 
   // and load the index.html of the app.
   mainWindow.loadFile(path.join(__dirname, "index.html"));
-
+  mainWindow.on("closed", (event) => {
+    mainWindow = null;
+  });
   // Open the DevTools.
-  mainWindow.webContents.openDevTools();
+  // mainWindow.webContents.openDevTools();
 };
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 
-function showNotification(title, body) {
-  new Notification({
-    title: title,
-    body: body,
-  }).show();
+function appHandle() {
+  ipcMain.handle("ping", () => "pong");
+  ipcMain.handle("calculateTimeToMinutes", () => calculateTimeToMinutes());
+  ipcMain.handle("isScheduledTask", () => isScheduledTask());
+  ipcMain.handle("scheduleTask", (event) => {
+    scheduleTask();
+  });
+  ipcMain.handle("stopScheduledTask", (event) => {
+    stopScheduledTask();
+  });
+  ipcMain.handle("stopAudio", (event) => {
+    stopAudio();
+  });
+  ipcMain.handle("isAlertRingging", () => isAlertRingging());
+  ipcMain.handle("getInputFromUser", (event, title, body) => {
+    getInputFromUser(title, body);
+  });
 }
 
 app.on("ready", () => {
-  ipcMain.handle("ping", () => "pong");
-  ipcMain.handle("notify", (event, title, body) => {
-    showNotification(title, body);
-  });
+  appHandle();
   createWindow();
 });
 
@@ -47,9 +108,9 @@ app.on("ready", () => {
 // for applications and their menu bar to stay active until the user quits
 // explicitly with Cmd + Q.
 app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") {
-    app.quit();
-  }
+  try {
+    app.dock.hide();
+  } catch (error) {}
 });
 
 app.on("activate", () => {

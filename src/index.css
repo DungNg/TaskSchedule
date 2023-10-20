@@ -136,6 +136,8 @@ table {
 
 /* --------------------- reset css ----- */
 .container {
+  --background-color: #222222;
+  --primary-color: #969ba1;
   --width: 500px;
   --padding: 1rem;
   width: 100vw;
@@ -145,7 +147,8 @@ table {
   align-items: center;
   flex-direction: column;
   font-size: 20px;
-  background-color: orange;
+  color: var(--primary-color);
+  background-color: var(--background-color);
 }
 
 #countdown {
@@ -166,6 +169,9 @@ input {
   padding: 20px;
   border-radius: .5rem;
   font-size: 20px;
+  background: var(--background-color);
+  color: var(--primary-color);
+  border: 1px solid var(--primary-color);
 }
 
 .btn-container {
@@ -193,9 +199,14 @@ button {
   padding-top: 10px;
   padding-bottom: 10px;
   border-radius: .5rem;
-  border: 1px solid black;
+  border: 1px solid var(--primary-color);
+}
+
+button:disabled {
+  cursor: not-allowed;
+  border: none;
 }
 
 #btn-start {}
 
-#btn-stop-audio {}
+#btn-stop-audio:disabled {}

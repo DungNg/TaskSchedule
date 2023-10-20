@@ -3,10 +3,12 @@
 
 const { contextBridge, ipcRenderer } = require("electron");
 
-contextBridge.exposeInMainWorld("versions", {
-  node: () => process.versions.node,
-  chrome: () => process.versions.chrome,
-  electron: () => process.versions.electron,
-  ping: () => ipcRenderer.invoke("ping"),
-  notify: (title, body) => ipcRenderer.invoke("notify", title, body),
+contextBridge.exposeInMainWorld("bridge", {
+  calculateTimeToMinutes: () => ipcRenderer.invoke("calculateTimeToMinutes"),
+  scheduleTask: () => ipcRenderer.invoke("scheduleTask"),
+  isScheduledTask: () => ipcRenderer.invoke("isScheduledTask"),
+  stopScheduledTask: () => ipcRenderer.invoke("stopScheduledTask"),
+  isAlertRingging: () => ipcRenderer.invoke("isAlertRingging"),
+  stopAudio: () => ipcRenderer.invoke("stopAudio"),
+  getInputFromUser: (title, body) => ipcRenderer.invoke("getInputFromUser", title, body),
 });

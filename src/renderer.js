@@ -1,34 +1,7 @@
-const notify = async (title, body) => {
-  if (!title) {
-    title = "Thông báo";
-  }
-  if (!body) {
-    body = "Tập thể dục đê";
-  }
-  await versions.notify(title, body);
-};
-
-const calculateTimeToMinutes = () => {
-  let halfHour = 30;
-  let fullHour = 60;
-  let oneMinutes = 1000 * 60;
-  let oneSeconds = 1000;
-  const currentTime = new Date();
-  const currentMinutes = currentTime.getMinutes();
-  const currentSeconds = currentTime.getSeconds();
-  if (currentMinutes > halfHour && currentMinutes < fullHour) {
-    return (
-      (fullHour - currentMinutes) * oneMinutes - currentSeconds * oneSeconds
-    );
-  }
-
-  if (currentMinutes > 0 && currentMinutes < halfHour) {
-    return (
-      (halfHour - currentMinutes) * oneMinutes - currentSeconds * oneSeconds
-    );
-  }
-  return halfHour * oneMinutes - currentSeconds * oneSeconds;
-};
+let btnStart = document.getElementById("btn-start");
+let btnStop = document.getElementById("btn-stop");
+let btnStopAudio = document.getElementById("btn-stop-audio");
+let countdownTimer = document.getElementById("countdown");
 
 const getInputFromUser = () => {
   let title = document.getElementById("title").value;
@@ -36,21 +9,46 @@ const getInputFromUser = () => {
   return { title, body };
 };
 
-let audioElement = null;
-const playAudio = () => {
-  if (audioElement == null) {
-    audioElement = document.createElement("audio");
-    audioElement.setAttribute("src", "../assets/mixkit-guitar.wav");
-    audioElement.setAttribute("autoplay", "autoplay");
-    audioElement.loop = true;
-  }
-  audioElement.load();
+let MODE = {
+  STOPPED: "stopped",
+  STARTED: "started",
+  ALERT: "alert",
+  SNOOZED: "snoozed",
+};
+let CURRENT_MODE = null;
+const AppStatus = (mode) => {
+  const result = {
+    [MODE.STOPPED]: () => {
+      countdownTimer.innerHTML = "00:00:00";
+      btnStart.disabled = false;
+      btnStop.disabled = true;
+      btnStopAudio.disabled = true;
+      CURRENT_MODE = MODE.STOPPED;
+    },
+    [MODE.STARTED]: () => {
+      btnStart.disabled = true;
+      btnStop.disabled = false;
+      CURRENT_MODE = MODE.STARTED;
+    },
+    [MODE.ALERT]: () => {
+      btnStart.disabled = true;
+      btnStop.disabled = false;
+      btnStopAudio.disabled = false;
+      CURRENT_MODE = MODE.ALERT;
+    },
+    [MODE.SNOOZED]: () => {
+      btnStart.disabled = true;
+      btnStop.disabled = false;
+      btnStopAudio.disabled = true;
+      CURRENT_MODE = MODE.SNOOZED;
+    },
+  };
+  return result[mode]();
 };
 
-const stopAudio = () => {
-  if (audioElement != null) {
-    audioElement.pause();
-  }
+const stopAudio = async () => {
+  await window.bridge.stopAudio();
+  AppStatus(MODE.SNOOZED);
 };
 
 function msToTime(s) {
@@ -64,33 +62,72 @@ function msToTime(s) {
   return (hrs || "00") + ":" + (mins || "00") + ":" + secs;
 }
 
-const main = async () => {
-  let setTimeoutId = null;
-  let setIntervalId = null;
-  let { title, body } = getInputFromUser();
-
-  setTimeoutId = setTimeout(() => {
-    notify(title, body);
-    playAudio();
-    main();
-  }, calculateTimeToMinutes());
-
-  setIntervalId = setInterval(() => {
-    let countdownTime = calculateTimeToMinutes();
+let setIntervalId = null;
+const countdown = () => {
+  setIntervalId = setInterval(async () => {
+    let countdownTime = await bridge.calculateTimeToMinutes();
     countdownTime = countdownTime - 1000;
     document.getElementById("countdown").innerHTML = msToTime(countdownTime);
-
     if (countdownTime <= 0) {
-      clearInterval(setIntervalId);
+      if ((await isScheduledTask()) === false) {
+        clearInterval(setIntervalId);
+      }
     }
   }, 1000);
 };
 
-let btnStart = document.getElementById("btn-start");
-let btnStopAudio = document.getElementById("btn-stop-audio");
+const main = async () => {
+  let { title, body } = getInputFromUser();
+  await bridge.getInputFromUser(title, body);
+  await bridge.scheduleTask();
+  countdown();
+  AppStatus(MODE.STARTED);
+};
+
+const stop = async () => {
+  clearInterval(setIntervalId);
+  await bridge.stopScheduledTask();
+  AppStatus(MODE.STOPPED);
+};
+
 btnStart.addEventListener("click", () => {
   main();
+});
+btnStop.addEventListener("click", () => {
+  stop();
 });
 btnStopAudio.addEventListener("click", () => {
   stopAudio();
 });
+
+let isScheduledTask = async () => {
+  return await bridge.isScheduledTask();
+};
+
+let isAlertRingging = async () => {
+  return await bridge.isAlertRingging();
+};
+
+let resumeCountdown = async () => {
+  if (CURRENT_MODE != null) {
+    return;
+  }
+  if ((await isScheduledTask()) === true) {
+    countdown();
+    AppStatus(MODE.STARTED);
+  }
+};
+
+let enableSnoozeIfAlertIsRingging = async () => {
+  if (CURRENT_MODE === MODE.ALERT) {
+    return;
+  }
+  if ((await isAlertRingging()) === true) {
+    AppStatus(MODE.ALERT);
+  }
+};
+
+setInterval(async () => {
+  await resumeCountdown();
+  await enableSnoozeIfAlertIsRingging();
+}, 0);
